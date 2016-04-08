@@ -1,55 +1,31 @@
-#PRE PROGRAM JE POTREBNE ABY ZDROJOVY FOLDER OBSAHOVAL LEN POTREBNE FILES
-#program pre spocitanie portov vo vlan ako vstup sluzi vypis zo switchov:
-#!!!sh run | inc authorize vlan!!!!
-
-#pre test s 1 suborom, treba zmenit vo funkcii PS i = 1 a while i < pr - 1
-#input = open('C:\Program Files (x86)\CatTools3\Captured Data\Volkswagen\DeadVLAN\h3x-c2960a-poe.20160211.txt').readlines()
-#print input
-
-#otvorenie vsetkych suborov v adresari
-# funkcia PS musi mat i = 0; while i < pr 
 import os
-directory = 'C:\Program Files (x86)\CatTools3\Captured Data\Volkswagen\ACCESSVLAN\West' #cesta kde su subory ulozene
+import re
 
-vypis = []
+directory = 'C:\Program Files (x86)\CatTools3\Configs\Volkswagen' #cesta kde su subory ulozene
+
+vstup = []
+vystup = []
 for filename in os.listdir(directory):
 	#print filename		#vypise len mena suborov v adresari "directory"
 	path = os.path.join(directory, filename)	#definicia adresaru
 	#print path		#vypise celu cestu s menom suborov v adresari "directory"
 	lines = open(path).readlines()		#precitanie subora v adresari "directory"
-	vypis.extend(lines[1:-1])						#vysledny riadky subora (pole) zapise do pola vypis
+	vstup.extend(lines)			
 
-#print vypis
-#print len(vypis)
-
-# funkcia vrati posledne slovo v riadku 
-def PS(vstup):
-	i = 0	#uz pri zapisovani do pola vysledok odstrihavam prvy a posledny riadok z kazdeho subora
-	pr = len(vstup)
-	vlans = []
-	while i < pr: 	
-		riadok = vstup[i]		#zoberie premennu-pole "vstup" poziciu i
-		slova = riadok.split(' ') # rozdeli hodnotu (riadok) v [i] na slova
-		PS = int(slova[-1]) # vysledok je cislo na poslednej pozicii
-		vlans.append(PS)			# vysledne cislo vlozi do pola VLAN
-		#print riadok
-		i = i + 1
-	return vlans					# pole bude obsahovat cisla VLAN na switchi
 	
+for riadok in vstup:
+	if re.search("switchport access vlan (\d+)", riadok):
+		vystup.append(int(re.search("switchport access vlan (\d+)", riadok).group(1)))
 
-#print PS(vypis)
-
-
-def VLAN_count(vstup):
- 	hodnoty = PS(vstup)	#ako vstup sluzi vysledok PS
-	print hodnoty
- 	VLAN = 1
- 	while VLAN < 4096:	#cyklus pre vsetky hodnoty, ktore moze VLAN mat
- 		if hodnoty.count(VLAN) != 0:	#ak sa nejaka VLAN vyskytla v poli PS (bola teda vo vypise switcha)
- 			print "VLAN", VLAN, "\t", hodnoty.count(VLAN) # vypis VLAN, jej cislo a kolkokrat sa vyskytla
- 			pass
-		else:			#inak sa zacykli v prvej casti
+def VLAN_count():	
+	for VLAN in range(1,4097):
+		if vystup.count(VLAN) != 0:
+			if len(str(VLAN)) == 1:
+				print "VLAN %s \t\t %d" % (VLAN, vystup.count(VLAN))
+			else:
+				print "VLAN %s \t %d" % (VLAN, vystup.count(VLAN))
+		else:
 			pass
-		VLAN += 1			
- 
-VLAN_count(vypis)
+
+
+VLAN_count()
